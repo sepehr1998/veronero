@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #f9fafb;
+  --color-card: #ffffff;
+  --color-card-alt: #f3f4f6;
+  --color-primary: #C99383;
+  --color-primary-hover: #D8b2A7;
+  --color-border: #e5e7eb;
+  --color-text-primary: #111827;
+  --color-text-secondary: #6b7280;
+  --color-error: #ef4444;
+  --color-success: #10b981;
+  --color-site-background: #e8d1ca;
+  --color-rg-background: #F3EFED;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+}
+
+@keyframes gradient-x {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradient-x 6s ease infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 10px var(--color-text-primary));
+    opacity: 1;
+  }
+  50% {
+    filter: drop-shadow(0 0 10px var(--color-primary));
+    opacity: 0.9;
+  }
+}
+
+.animate-pulse-glow {
+  animation-name: pulse-glow;
+  animation-duration: 2.5s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
