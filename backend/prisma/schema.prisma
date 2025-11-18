@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AccountType {
+  INDIVIDUAL @map("individual")
+  BUSINESS   @map("business")
+}
+
+enum UserAccountRole {
+  OWNER  @map("owner")
+  ADMIN  @map("admin")
+  MEMBER @map("member")
+  VIEWER @map("viewer")
+}
+
+model User {
+  id          String          @id @default(uuid()) @db.Uuid
+  auth0Id     String          @unique @map("auth0_user_id")
+  email       String          @unique
+  fullName    String?         @map("full_name")
+  locale      String?
+  lastLoginAt DateTime?       @map("last_login_at")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  accounts    UserAccount[]
+  taxProfiles UserTaxProfile[]
+
+  @@map("users")
+}
+
+model Account {
+  id          String          @id @default(uuid()) @db.Uuid
+  name        String
+  type        AccountType
+  countryCode String          @map("country_code")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  users       UserAccount[]
+  taxProfiles UserTaxProfile[]
+  country     Country         @relation(fields: [countryCode], references: [code])
+
+  @@map("accounts")
+}
+
+model UserAccount {
+  id        String           @id @default(uuid()) @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  accountId String           @map("account_id") @db.Uuid
+  role      UserAccountRole
+  createdAt DateTime         @default(now()) @map("created_at")
+  updatedAt DateTime         @updatedAt @map("updated_at")
+
+  user      User             @relation(fields: [userId], references: [id])
+  account   Account          @relation(fields: [accountId], references: [id])
+
+  @@unique([userId, accountId])
+  @@map("user_accounts")
+}
+
+model Country {
+  code       String       @id
+  name       String
+  accounts   Account[]
+  taxRegimes TaxRegime[]
+
+  @@map("countries")
+}
+
+model TaxRegime {
+  id          String              @id @default(uuid()) @db.Uuid
+  countryCode String              @map("country_code")
+  slug        String              @unique
+  displayName String              @map("display_name")
+  isActive    Boolean             @default(true) @map("is_active")
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
+
+  country     Country             @relation(fields: [countryCode], references: [code])
+  settings    TaxRegimeSetting[]
+  userProfiles UserTaxProfile[]
+
+  @@map("tax_regimes")
+}
+
+model TaxRegimeSetting {
+  id            String     @id @default(uuid()) @db.Uuid
+  taxRegimeId   String     @map("tax_regime_id") @db.Uuid
+  settingsJson  Json       @map("settings_json")
+  validFrom     DateTime?  @map("valid_from")
+  validTo       DateTime?  @map("valid_to")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+
+  taxRegime     TaxRegime  @relation(fields: [taxRegimeId], references: [id])
+
+  @@map("tax_regime_settings")
+}
+
+model UserTaxProfile {
+  id              String     @id @default(uuid()) @db.Uuid
+  userId          String     @map("user_id") @db.Uuid
+  accountId       String     @map("account_id") @db.Uuid
+  taxRegimeId     String     @map("tax_regime_id") @db.Uuid
+  occupation      String?
+  profileDataJson Json       @map("profile_data_json")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  user            User       @relation(fields: [userId], references: [id])
+  account         Account    @relation(fields: [accountId], references: [id])
+  taxRegime       TaxRegime  @relation(fields: [taxRegimeId], references: [id])
+
+  @@map("user_tax_profiles")
+}

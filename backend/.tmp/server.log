@@ -1,0 +1,50 @@
+
+> backend@0.0.1 start
+> nest start
+
+[32m[Nest] 15270  - [39m11/17/2025, 8:11:43 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 15270  - [39m11/17/2025, 8:11:43 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mQueueModule dependencies initialized[39m[38;5;3m +7ms[39m
+[32m[Nest] 15270  - [39m11/17/2025, 8:11:43 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15270  - [39m11/17/2025, 8:11:43 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 15270  - [39m11/17/2025, 8:11:43 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15270  - [39m11/17/2025, 8:11:43 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUsersModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15270  - [39m11/17/2025, 8:11:43 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 15270  - [39m11/17/2025, 8:11:43 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15270  - [39m11/17/2025, 8:11:43 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15270  - [39m11/17/2025, 8:11:43 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mRedisModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15270  - [39m11/17/2025, 8:11:43 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBullModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15270  - [39m11/17/2025, 8:11:43 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 15270  - [39m11/17/2025, 8:11:43 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[Auth0 config] {
+  baseUrl: 'http://localhost:4000',
+  issuerBaseURL: 'https://dev-p2sunmdl73mhl2j4.us.auth0.com',
+  clientId: 'O2DwXrgaoguCSMAamnrP183TBi2bsPgf'
+}
+Using 'form_post' for response_mode may cause issues for you logging in over http, see https://github.com/auth0/express-openid-connect/blob/master/FAQ.md
+[32m[Nest] 15270  - [39m11/17/2025, 8:11:43 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAppController {/}:[39m[38;5;3m +5ms[39m
+[32m[Nest] 15270  - [39m11/17/2025, 8:11:43 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/, GET} route[39m[38;5;3m +1ms[39m
+[32m[Nest] 15270  - [39m11/17/2025, 8:11:43 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/health}:[39m[38;5;3m +0ms[39m
+[32m[Nest] 15270  - [39m11/17/2025, 8:11:43 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +0ms[39m
+[32m[Nest] 15270  - [39m11/17/2025, 8:11:43 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +22ms[39m
+[31m[Nest] 15270  - [39m11/17/2025, 8:11:43 PM [31m  ERROR[39m [38;5;3m[NestApplication] [39m[31mError: listen EADDRINUSE: address already in use :::4000[39m[38;5;3m +0ms[39m
+node:net:1939
+    const ex = new UVExceptionWithHostPort(err, 'listen', address, port);
+               ^
+
+Error: listen EADDRINUSE: address already in use :::4000
+    at Server.setupListenHandle [as _listen2] (node:net:1939:16)
+    at listenInCluster (node:net:1996:12)
+    at Server.listen (node:net:2101:7)
+    at ExpressAdapter.listen (/Users/sepehr/Projects/VeroNero/backend/node_modules/@nestjs/platform-express/adapters/express-adapter.js:127:32)
+    at /Users/sepehr/Projects/VeroNero/backend/node_modules/@nestjs/core/nest-application.js:188:30
+    at new Promise (<anonymous>)
+    at NestApplication.listen (/Users/sepehr/Projects/VeroNero/backend/node_modules/@nestjs/core/nest-application.js:178:16)
+    at async bootstrap (/Users/sepehr/Projects/VeroNero/backend/src/main.ts:32:5) {
+  code: 'EADDRINUSE',
+  errno: -48,
+  syscall: 'listen',
+  address: '::',
+  port: 4000
+}
+
+Node.js v22.16.0
