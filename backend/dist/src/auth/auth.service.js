@@ -21,6 +21,7 @@ let AuthService = class AuthService {
     baseOrigin;
     audience;
     defaultScope = 'openid profile email';
+    allowedReturnOrigins;
     constructor(configService, usersService) {
         this.configService = configService;
         this.usersService = usersService;
@@ -28,6 +29,17 @@ let AuthService = class AuthService {
         this.baseOrigin = new URL(this.baseUrl).origin;
         this.callbackUrl = new URL('/auth/callback', this.baseUrl).toString();
         this.audience = this.configService.getOrThrow('auth.audience');
+        const configuredOrigins = this.configService.get('auth.allowedReturnOrigins') ?? [];
+        this.allowedReturnOrigins = new Set(configuredOrigins
+            .map((origin) => {
+            try {
+                return new URL(origin).origin;
+            }
+            catch {
+                return null;
+            }
+        })
+            .filter((value) => Boolean(value)));
     }
     async login(res, options) {
         await res.oidc.login({
@@ -76,11 +88,15 @@ let AuthService = class AuthService {
         }
         try {
             const resolvedUrl = new URL(value, this.baseUrl);
-            if (resolvedUrl.origin !== this.baseOrigin) {
-                return '/';
+            const origin = resolvedUrl.origin;
+            if (origin === this.baseOrigin) {
+                const path = `${resolvedUrl.pathname}${resolvedUrl.search}${resolvedUrl.hash}`;
+                return path.startsWith('/') ? path : `/${path}`;
             }
-            const path = `${resolvedUrl.pathname}${resolvedUrl.search}${resolvedUrl.hash}`;
-            return path.startsWith('/') ? path : `/${path}`;
+            if (this.allowedReturnOrigins.has(origin)) {
+                return resolvedUrl.toString();
+            }
+            return '/';
         }
         catch {
             return '/';

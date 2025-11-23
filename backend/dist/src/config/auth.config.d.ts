@@ -7,6 +7,7 @@ export interface AuthConfig {
     clientId: string;
     clientSecret: string;
     sessionSecret: string;
+    allowedReturnOrigins: string[];
 }
 declare const _default: import("@nestjs/config").ConfigFactory<AuthConfig> & import("@nestjs/config").ConfigFactoryKeyHost<AuthConfig | Promise<AuthConfig>>;
 export default _default;

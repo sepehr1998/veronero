@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useCallback } from 'react'
 import {
     Bell,
     LogOut,
@@ -21,18 +21,20 @@ import Image from 'next/image'
 import Link from "next/link";
 import Logo from "@/assets/logo.png";
 import { useUserStore } from "@/stores/user";
+import { buildAuthLogoutUrl } from "@/lib/auth";
 
-type Props = {
-    user: {
-        name: string
-        email: string
-        avatarUrl?: string
-        role?: string
-    }
-}
+export default function DashboardNavbar() {
+    const { user, clearUser } = useUserStore()
+    const displayName = user?.fullName || user?.email || 'Guest User'
+    const role = user ? 'Member' : 'Guest'
 
-export default function DashboardNavbar({ user }: Props) {
-    const { clearUser } = useUserStore()
+    const handleLogout = useCallback(() => {
+        const target =
+            typeof window !== 'undefined' ? window.location.origin : '/';
+        clearUser()
+        window.location.href = buildAuthLogoutUrl(target)
+    }, [clearUser])
+
     return (
         <header className="fixed top-0 left-0 right-0 z-50 bg-white/70 backdrop-blur-lg border-b border-gray-200 shadow-sm">
             <div className="mx-auto px-4 py-3 relative">
@@ -61,15 +63,15 @@ export default function DashboardNavbar({ user }: Props) {
                             <DropdownMenuTrigger asChild>
                                 <button className="flex items-center space-x-2 bg-gray-50 hover:bg-gray-100 px-3 py-2 rounded-full transition">
                                     <Image
-                                        src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.name}`}
-                                        alt={user.name}
+                                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}`}
+                                        alt={displayName}
                                         width={32}
                                         height={32}
                                         className="rounded-full object-cover"
                                     />
                                     <div className="text-left hidden sm:block">
-                                        <p className="text-sm font-semibold text-gray-800">{user.name}</p>
-                                        <p className="text-xs text-gray-500">{user.role || 'User'}</p>
+                                        <p className="text-sm font-semibold text-gray-800">{displayName}</p>
+                                        <p className="text-xs text-gray-500">{role}</p>
                                     </div>
                                 </button>
                             </DropdownMenuTrigger>
@@ -92,9 +94,15 @@ export default function DashboardNavbar({ user }: Props) {
                                     <span>Help & Support</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem className="flex items-center space-x-2 text-red-600">
+                                <DropdownMenuItem
+                                    className="flex items-center space-x-2 text-red-600"
+                                    onSelect={(event) => {
+                                        event.preventDefault()
+                                        handleLogout()
+                                    }}
+                                >
                                     <LogOut className="w-4 h-4" />
-                                    <button onClick={clearUser}>Logout</button>
+                                    <span>Logout</span>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>

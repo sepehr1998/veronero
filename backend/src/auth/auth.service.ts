@@ -22,6 +22,7 @@ export class AuthService {
     private readonly baseOrigin: string;
     private readonly audience: string;
     private readonly defaultScope = 'openid profile email';
+    private readonly allowedReturnOrigins: Set<string>;
 
     constructor(
         private readonly configService: ConfigService,
@@ -31,6 +32,19 @@ export class AuthService {
         this.baseOrigin = new URL(this.baseUrl).origin;
         this.callbackUrl = new URL('/auth/callback', this.baseUrl).toString();
         this.audience = this.configService.getOrThrow<string>('auth.audience');
+        const configuredOrigins =
+            this.configService.get<string[]>('auth.allowedReturnOrigins') ?? [];
+        this.allowedReturnOrigins = new Set(
+            configuredOrigins
+                .map((origin) => {
+                    try {
+                        return new URL(origin).origin;
+                    } catch {
+                        return null;
+                    }
+                })
+                .filter((value): value is string => Boolean(value)),
+        );
     }
 
     async login(res: Response, options?: LoginOptions): Promise<void> {
@@ -87,11 +101,18 @@ export class AuthService {
         }
         try {
             const resolvedUrl = new URL(value, this.baseUrl);
-            if (resolvedUrl.origin !== this.baseOrigin) {
-                return '/';
+            const origin = resolvedUrl.origin;
+
+            if (origin === this.baseOrigin) {
+                const path = `${resolvedUrl.pathname}${resolvedUrl.search}${resolvedUrl.hash}`;
+                return path.startsWith('/') ? path : `/${path}`;
             }
-            const path = `${resolvedUrl.pathname}${resolvedUrl.search}${resolvedUrl.hash}`;
-            return path.startsWith('/') ? path : `/${path}`;
+
+            if (this.allowedReturnOrigins.has(origin)) {
+                return resolvedUrl.toString();
+            }
+
+            return '/';
         } catch {
             return '/';
         }

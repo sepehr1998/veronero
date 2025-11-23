@@ -40,6 +40,7 @@ exports.envValidationSchema = Joi.object({
         .valid('development', 'test', 'production')
         .default('development'),
     PORT: Joi.number().port().default(3000),
+    APP_ALLOWED_ORIGINS: Joi.string().allow('', null),
     DATABASE_URL: Joi.string().uri().required(),
     REDIS_URL: Joi.string().uri().required(),
     BULLMQ_PREFIX: Joi.string().default('veronero'),
@@ -50,6 +51,7 @@ exports.envValidationSchema = Joi.object({
     AUTH0_CLIENT_ID: Joi.string().required(),
     AUTH0_CLIENT_SECRET: Joi.string().required(),
     AUTH0_SESSION_SECRET: Joi.string().min(32).required(),
+    AUTH_ALLOWED_RETURN_ORIGINS: Joi.string().allow('', null),
     AI_API_KEY: Joi.string().allow('', null),
     STORAGE_BUCKET: Joi.string().required(),
     STORAGE_ENDPOINT: Joi.string().uri().allow('', null),

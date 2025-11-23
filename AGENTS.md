@@ -19,13 +19,11 @@ Commits should be small, single-topic, and use imperative subjects with a Conven
 Create `frontend/.env.local` with `NEXT_PUBLIC_API_URL=<backend-endpoint>` for dashboard fetchers—never commit credentials. Record any additional secrets in `.env.example` and describe setup steps in your PR. When wiring backend APIs, document ports and auth requirements so other agents can reproduce without guesswork.
 
 ## What you need to do as the coding agent
-You are building the backend for an AI-powered tax assistant called Veronero.
+You are building the backend and frontend for an AI-powered tax assistant called Veronero.
 
-Frontend already exists (Nest is only for backend).
+Frontend already exists in some sort (Nest is only for backend).
 
 Backend tech: NestJS + TypeScript, PostgreSQL, Redis and BullMQ (for queues), Auth0 for authentication.
-
-DO NOT implement any frontend code.
 
 Focus on:
 
@@ -39,6 +37,10 @@ Domain modules (tax cards, expenses, tax scenarios, life events, calendar, chat)
 
 Async processing / workers
 
-Use clean, modular Nest architecture (modules, services, controllers, guards, interceptors).
+Use clean, modular architecture (modules, services, controllers, guards, interceptors).
+
+Frontend Development
+
+Integrate frontend with auth service in backend and Auth0
 
 Follow the steps that I give you, fully implementing and testing each step before moving on.

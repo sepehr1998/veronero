@@ -3,9 +3,10 @@ import { persist } from 'zustand/middleware';
 
 type User = {
     id: string;
-    name: string;
     email: string;
-    token?: string; // optional JWT or session token
+    fullName?: string | null;
+    locale?: string | null;
+    lastLoginAt?: string | null;
 };
 
 type UserState = {
@@ -13,6 +14,8 @@ type UserState = {
     setUser: (user: User | null) => void;
     clearUser: () => void;
     isAuthenticated: boolean;
+    isSessionLoading: boolean;
+    setSessionLoading: (value: boolean) => void;
 };
 
 export const useUserStore = create<UserState>()(
@@ -20,8 +23,10 @@ export const useUserStore = create<UserState>()(
         (set) => ({
             user: null,
             isAuthenticated: false,
+            isSessionLoading: true,
             setUser: (user) => set({ user, isAuthenticated: !!user }),
             clearUser: () => set({ user: null, isAuthenticated: false }),
+            setSessionLoading: (value) => set({ isSessionLoading: value }),
         }),
         {
             name: 'user-storage', // key for localStorage

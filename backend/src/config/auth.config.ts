@@ -9,6 +9,7 @@ export interface AuthConfig {
     clientId: string;
     clientSecret: string;
     sessionSecret: string;
+    allowedReturnOrigins: string[];
 }
 
 export default registerAs<AuthConfig>('auth', () => {
@@ -16,6 +17,18 @@ export default registerAs<AuthConfig>('auth', () => {
     const rawIssuer = process.env.AUTH0_ISSUER_URL ?? `https://${domain}`;
     const issuerBaseUrl = rawIssuer.replace(/\/+$/, '');
     const issuerUrl = `${issuerBaseUrl}/`;
+
+    const configuredOrigins =
+        process.env.AUTH_ALLOWED_RETURN_ORIGINS?.split(',')
+            .map((value) => value.trim())
+            .filter(Boolean) ?? [];
+
+    const devDefaultOrigins =
+        process.env.NODE_ENV === 'production' ? [] : ['http://localhost:3000'];
+
+    const allowedReturnOrigins = Array.from(
+        new Set([...configuredOrigins, ...devDefaultOrigins]),
+    );
 
     return {
         domain,
@@ -26,5 +39,6 @@ export default registerAs<AuthConfig>('auth', () => {
         clientId: process.env.AUTH0_CLIENT_ID ?? '',
         clientSecret: process.env.AUTH0_CLIENT_SECRET ?? '',
         sessionSecret: process.env.AUTH0_SESSION_SECRET ?? '',
+        allowedReturnOrigins,
     };
 });

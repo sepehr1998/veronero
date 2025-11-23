@@ -6,6 +6,17 @@ import { AppModule } from './app.module';
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
     const configService = app.get(ConfigService);
+    const allowedOrigins = configService.get<string[]>('app.allowedOrigins') ?? [];
+
+    app.enableCors({
+        credentials: true,
+        origin: (origin, callback) => {
+            if (!origin || allowedOrigins.includes(origin)) {
+                return callback(null, true);
+            }
+            return callback(new Error(`CORS origin denied: ${origin}`), false);
+        },
+    });
 
     const baseUrl = configService.getOrThrow<string>('auth.baseUrl');
     const clientId = configService.getOrThrow<string>('auth.clientId');

@@ -14,6 +14,7 @@ export declare class AuthService {
     private readonly baseOrigin;
     private readonly audience;
     private readonly defaultScope;
+    private readonly allowedReturnOrigins;
     constructor(configService: ConfigService, usersService: UsersService);
     login(res: Response, options?: LoginOptions): Promise<void>;
     logout(res: Response, returnTo?: string): Promise<void>;

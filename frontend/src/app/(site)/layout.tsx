@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "../globals.css";
 import React from "react";
 import Header from "./components/Header";
+import AuthSessionSync from "@/components/AuthSessionSync";
 
 export const metadata: Metadata = {
     title: "Vero Nero",
@@ -16,6 +17,7 @@ export default function RootLayout({
     return (
         <html lang="en">
         <body>
+            <AuthSessionSync />
             <Header />
             <main>{children}</main>
         </body>
