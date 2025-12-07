@@ -18,6 +18,8 @@ import { QueueModule } from './queue/queue.module';
 import { RedisModule } from './redis/redis.module';
 import { TaxProfilesModule } from './tax-profiles/tax-profiles.module';
 import { TaxCardsModule } from './tax-cards/tax-cards.module';
+import { ExpensesModule } from './expenses/expenses.module';
+import { ReceiptsModule } from './receipts/receipts.module';
 
 @Module({
     imports: [
@@ -45,6 +47,8 @@ import { TaxCardsModule } from './tax-cards/tax-cards.module';
         StorageModule,
         TaxProfilesModule,
         TaxCardsModule,
+        ExpensesModule,
+        ReceiptsModule,
     ],
     controllers: [AppController],
     providers: [AppService],

@@ -26,6 +26,18 @@ enum TaxCardStatus {
   ERROR      @map("error")
 }
 
+enum ExpenseSource {
+  MANUAL   @map("manual")
+  RECEIPT  @map("receipt")
+}
+
+enum ReceiptStatus {
+  UPLOADED   @map("uploaded")
+  PROCESSING @map("processing")
+  PARSED     @map("parsed")
+  ERROR      @map("error")
+}
+
 model User {
   id          String          @id @default(uuid()) @db.Uuid
   auth0Id     String          @unique @map("auth0_user_id")
@@ -39,6 +51,8 @@ model User {
   accounts    UserAccount[]
   taxProfiles UserTaxProfile[]
   taxCards    TaxCard[]
+  expenses    Expense[]
+  receiptFiles ReceiptFile[]
 
   @@map("users")
 }
@@ -54,6 +68,8 @@ model Account {
   users       UserAccount[]
   taxProfiles UserTaxProfile[]
   taxCards    TaxCard[]
+  expenses    Expense[]
+  receiptFiles ReceiptFile[]
   country     Country         @relation(fields: [countryCode], references: [code])
 
   @@map("accounts")
@@ -96,6 +112,8 @@ model TaxRegime {
   settings    TaxRegimeSetting[]
   userProfiles UserTaxProfile[]
   taxCards    TaxCard[]
+  expenseCategories ExpenseCategory[]
+  expenses    Expense[]
 
   @@map("tax_regimes")
 }
@@ -178,4 +196,76 @@ model TaxCardAnalysis {
 
   @@index([taxCardId])
   @@map("tax_card_analyses")
+}
+
+model ExpenseCategory {
+  id           String     @id @default(uuid()) @db.Uuid
+  taxRegimeId  String     @map("tax_regime_id") @db.Uuid
+  code         String
+  displayName  String     @map("display_name")
+  description  String?
+  isActive     Boolean    @default(true) @map("is_active")
+
+  taxRegime    TaxRegime  @relation(fields: [taxRegimeId], references: [id])
+  expenses     Expense[]
+  receiptSuggestions ReceiptExtraction[]
+
+  @@map("expense_categories")
+  @@unique([taxRegimeId, code])
+}
+
+model Expense {
+  id           String         @id @default(uuid()) @db.Uuid
+  userId       String         @map("user_id") @db.Uuid
+  accountId    String         @map("account_id") @db.Uuid
+  taxRegimeId  String         @map("tax_regime_id") @db.Uuid
+  occurredAt   DateTime       @map("occurred_at")
+  amount       Decimal        @db.Decimal
+  currency     String
+  categoryId   String         @map("category_id") @db.Uuid
+  description  String?
+  isDeductible Boolean        @map("is_deductible")
+  source       ExpenseSource
+  createdAt    DateTime       @default(now()) @map("created_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+
+  user         User           @relation(fields: [userId], references: [id])
+  account      Account        @relation(fields: [accountId], references: [id])
+  taxRegime    TaxRegime      @relation(fields: [taxRegimeId], references: [id])
+  category     ExpenseCategory @relation(fields: [categoryId], references: [id])
+
+  @@map("expenses")
+  @@index([accountId, occurredAt])
+}
+
+model ReceiptFile {
+  id             String        @id @default(uuid()) @db.Uuid
+  userId         String        @map("user_id") @db.Uuid
+  accountId      String        @map("account_id") @db.Uuid
+  fileStorageKey String        @map("file_storage_key")
+  status         ReceiptStatus @default(UPLOADED)
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  user           User          @relation(fields: [userId], references: [id])
+  account        Account       @relation(fields: [accountId], references: [id])
+  extractions    ReceiptExtraction[]
+
+  @@map("receipt_files")
+}
+
+model ReceiptExtraction {
+  id                   String           @id @default(uuid()) @db.Uuid
+  receiptFileId        String           @unique @map("receipt_file_id") @db.Uuid
+  extractedJson        Json             @map("extracted_json")
+  suggestedAmount      Decimal          @map("suggested_amount")
+  suggestedDate        DateTime         @map("suggested_date")
+  suggestedCategoryId  String?          @map("suggested_category_id") @db.Uuid
+  confidenceScore      Decimal          @map("confidence_score")
+  createdAt            DateTime         @default(now()) @map("created_at")
+
+  receiptFile          ReceiptFile      @relation(fields: [receiptFileId], references: [id])
+  suggestedCategory    ExpenseCategory? @relation(fields: [suggestedCategoryId], references: [id])
+
+  @@map("receipt_extractions")
 }
