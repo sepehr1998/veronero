@@ -3,25 +3,38 @@ import { NestFactory } from '@nestjs/core';
 import { auth } from 'express-openid-connect';
 import { AppModule } from './app.module';
 
+type OriginCallback = (err: Error | null, allow?: boolean) => void;
+
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
     const configService = app.get(ConfigService);
-    const allowedOrigins = configService.get<string[]>('app.allowedOrigins') ?? [];
+    const allowedOrigins =
+        configService.get<string[]>('app.allowedOrigins') ?? [];
+
+    const corsOrigin = (
+        origin: string | undefined,
+        callback: OriginCallback,
+    ): void => {
+        if (!origin) {
+            return callback(null, true);
+        }
+
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+
+        const error = new Error(`CORS origin denied: ${origin}`);
+        return callback(error, false);
+    };
 
     app.enableCors({
         credentials: true,
-        origin: (origin, callback) => {
-            if (!origin || allowedOrigins.includes(origin)) {
-                return callback(null, true);
-            }
-            return callback(new Error(`CORS origin denied: ${origin}`), false);
-        },
+        origin: corsOrigin,
     });
 
     const baseUrl = configService.getOrThrow<string>('auth.baseUrl');
     const clientId = configService.getOrThrow<string>('auth.clientId');
-    const clientSecret =
-        configService.getOrThrow<string>('auth.clientSecret');
+    const clientSecret = configService.getOrThrow<string>('auth.clientSecret');
     const issuerBaseURL =
         configService.getOrThrow<string>('auth.issuerBaseUrl');
     const sessionSecret =

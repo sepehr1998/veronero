@@ -8,46 +8,65 @@ import type { UsersService } from '../users/users.service';
 describe('AuthService', () => {
     let service: AuthService;
     let usersService: jest.Mocked<UsersService>;
-    let configService: ConfigService;
+    let configService: Pick<ConfigService, 'getOrThrow' | 'get'>;
 
     beforeEach(() => {
         usersService = {
-            syncFromAuth0Payload: jest.fn(),
+            syncFromAuth0Payload: jest.fn<
+                ReturnType<UsersService['syncFromAuth0Payload']>,
+                Parameters<UsersService['syncFromAuth0Payload']>
+            >(),
         } as unknown as jest.Mocked<UsersService>;
 
-        const getOrThrow = jest.fn((key: string) => {
-            switch (key) {
-                case 'auth.baseUrl':
-                    return 'http://localhost:4000';
-                case 'auth.audience':
-                    return 'https://api.veronero.ai';
-                default:
-                    throw new Error(`Unexpected config key: ${key}`);
-            }
-        });
+        const getOrThrow: jest.MockedFunction<ConfigService['getOrThrow']> =
+            jest.fn((key: string) => {
+                switch (key) {
+                    case 'auth.baseUrl':
+                        return 'http://localhost:4000';
+                    case 'auth.audience':
+                        return 'https://api.veronero.ai';
+                    default:
+                        throw new Error(`Unexpected config key: ${key}`);
+                }
+            });
 
-        configService = { getOrThrow } as unknown as ConfigService;
+        const get: jest.MockedFunction<ConfigService['get']> = jest.fn(
+            (key: string) => {
+                if (key === 'auth.allowedReturnOrigins') {
+                    return [];
+                }
+                return undefined;
+            },
+        );
+
+        configService = { getOrThrow, get };
         service = new AuthService(configService, usersService);
     });
 
     it('calls login with sanitized return path', async () => {
-        const login = jest.fn().mockResolvedValue(undefined);
+        const login = jest
+            .fn<Promise<void>, [unknown?]>()
+            .mockResolvedValue(undefined);
         const res = { oidc: { login } } as unknown as Response;
+        const authorizationParamsMatcher: unknown = expect.objectContaining({
+            audience: 'https://api.veronero.ai',
+        });
+        const expectedLoginOptions: unknown = {
+            returnTo: '/',
+            authorizationParams: authorizationParamsMatcher,
+        };
 
         await service.login(res, { returnTo: 'https://evil.example.com' });
 
         expect(login).toHaveBeenCalledWith(
-            expect.objectContaining({
-                returnTo: '/',
-                authorizationParams: expect.objectContaining({
-                    audience: 'https://api.veronero.ai',
-                }),
-            }),
+            expect.objectContaining(expectedLoginOptions),
         );
     });
 
     it('passes through safe return path to login', async () => {
-        const login = jest.fn().mockResolvedValue(undefined);
+        const login = jest
+            .fn<Promise<void>, [unknown?]>()
+            .mockResolvedValue(undefined);
         const res = { oidc: { login } } as unknown as Response;
 
         await service.login(res, { returnTo: '/dashboard' });
@@ -60,7 +79,9 @@ describe('AuthService', () => {
     });
 
     it('calls logout with sanitized return path', async () => {
-        const logout = jest.fn().mockResolvedValue(undefined);
+        const logout = jest
+            .fn<Promise<void>, [unknown?]>()
+            .mockResolvedValue(undefined);
         const res = { oidc: { logout } } as unknown as Response;
 
         await service.logout(res, 'https://evil.example.com/logout');
@@ -69,7 +90,9 @@ describe('AuthService', () => {
     });
 
     it('delegates to oidc callback handler', async () => {
-        const callback = jest.fn().mockResolvedValue(undefined);
+        const callback = jest
+            .fn<Promise<void>, [unknown?]>()
+            .mockResolvedValue(undefined);
         const res = { oidc: { callback } } as unknown as Response;
 
         await service.handleCallback(res);

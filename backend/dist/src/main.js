@@ -8,14 +8,19 @@ async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const configService = app.get(config_1.ConfigService);
     const allowedOrigins = configService.get('app.allowedOrigins') ?? [];
+    const corsOrigin = (origin, callback) => {
+        if (!origin) {
+            return callback(null, true);
+        }
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        const error = new Error(`CORS origin denied: ${origin}`);
+        return callback(error, false);
+    };
     app.enableCors({
         credentials: true,
-        origin: (origin, callback) => {
-            if (!origin || allowedOrigins.includes(origin)) {
-                return callback(null, true);
-            }
-            return callback(new Error(`CORS origin denied: ${origin}`), false);
-        },
+        origin: corsOrigin,
     });
     const baseUrl = configService.getOrThrow('auth.baseUrl');
     const clientId = configService.getOrThrow('auth.clientId');

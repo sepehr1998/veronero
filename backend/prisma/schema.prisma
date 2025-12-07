@@ -19,6 +19,13 @@ enum UserAccountRole {
   VIEWER @map("viewer")
 }
 
+enum TaxCardStatus {
+  UPLOADED   @map("uploaded")
+  PROCESSING @map("processing")
+  PARSED     @map("parsed")
+  ERROR      @map("error")
+}
+
 model User {
   id          String          @id @default(uuid()) @db.Uuid
   auth0Id     String          @unique @map("auth0_user_id")
@@ -31,6 +38,7 @@ model User {
 
   accounts    UserAccount[]
   taxProfiles UserTaxProfile[]
+  taxCards    TaxCard[]
 
   @@map("users")
 }
@@ -45,6 +53,7 @@ model Account {
 
   users       UserAccount[]
   taxProfiles UserTaxProfile[]
+  taxCards    TaxCard[]
   country     Country         @relation(fields: [countryCode], references: [code])
 
   @@map("accounts")
@@ -86,6 +95,7 @@ model TaxRegime {
   country     Country             @relation(fields: [countryCode], references: [code])
   settings    TaxRegimeSetting[]
   userProfiles UserTaxProfile[]
+  taxCards    TaxCard[]
 
   @@map("tax_regimes")
 }
@@ -119,4 +129,53 @@ model UserTaxProfile {
   taxRegime       TaxRegime  @relation(fields: [taxRegimeId], references: [id])
 
   @@map("user_tax_profiles")
+}
+
+model TaxCard {
+  id             String           @id @default(uuid()) @db.Uuid
+  userId         String           @map("user_id") @db.Uuid
+  accountId      String           @map("account_id") @db.Uuid
+  taxRegimeId    String           @map("tax_regime_id") @db.Uuid
+  fileStorageKey String           @map("file_storage_key")
+  status         TaxCardStatus    @default(UPLOADED)
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  user           User             @relation(fields: [userId], references: [id])
+  account        Account          @relation(fields: [accountId], references: [id])
+  taxRegime      TaxRegime        @relation(fields: [taxRegimeId], references: [id])
+  parsed         TaxCardParsed?
+  analyses       TaxCardAnalysis[]
+
+  @@map("tax_cards")
+}
+
+model TaxCardParsed {
+  id                           String    @id @default(uuid()) @db.Uuid
+  taxCardId                    String    @unique @map("tax_card_id") @db.Uuid
+  sourceJson                   Json      @map("source_json")
+  withholdingPercentage        Decimal   @map("withholding_percentage")
+  secondaryWithholdingPercentage Decimal? @map("secondary_withholding_percentage")
+  incomeLimit                  Decimal   @map("income_limit")
+  validFrom                    DateTime  @map("valid_from")
+  validTo                      DateTime? @map("valid_to")
+  otherFieldsJson              Json      @map("other_fields_json")
+
+  taxCard                      TaxCard   @relation(fields: [taxCardId], references: [id])
+
+  @@map("tax_card_parsed")
+}
+
+model TaxCardAnalysis {
+  id                   String   @id @default(uuid()) @db.Uuid
+  taxCardId            String   @map("tax_card_id") @db.Uuid
+  aiSummaryText        String   @map("ai_summary_text")
+  keyPointsJson        Json     @map("key_points_json")
+  recommendationsJson  Json     @map("recommendations_json")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  taxCard              TaxCard  @relation(fields: [taxCardId], references: [id])
+
+  @@index([taxCardId])
+  @@map("tax_card_analyses")
 }

@@ -1,0 +1,53 @@
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { BullModule } from '@nestjs/bullmq';
+import aiConfig from '../config/ai.config';
+import appConfig from '../config/app.config';
+import authConfig from '../config/auth.config';
+import databaseConfig from '../config/database.config';
+import queueConfig from '../config/queue.config';
+import redisConfig from '../config/redis.config';
+import storageConfig from '../config/storage.config';
+import { envValidationSchema } from '../config/env.validation';
+import { DatabaseModule } from '../database/database.module';
+import { QueueModule } from '../queue/queue.module';
+import { StorageModule } from '../storage/storage.module';
+import { AiModule } from '../ai/ai.module';
+import { TaxCardProcessor } from './tax-card.processor';
+import {
+    RECEIPT_QUEUE,
+    SCENARIO_QUEUE,
+    TAX_CARD_QUEUE,
+} from '../queue/queue.constants';
+
+@Module({
+    imports: [
+        ConfigModule.forRoot({
+            cache: true,
+            expandVariables: true,
+            envFilePath: ['.env.local', '.env'],
+            isGlobal: true,
+            load: [
+                appConfig,
+                databaseConfig,
+                redisConfig,
+                queueConfig,
+                authConfig,
+                aiConfig,
+                storageConfig,
+            ],
+            validationSchema: envValidationSchema,
+        }),
+        QueueModule,
+        DatabaseModule,
+        StorageModule,
+        AiModule,
+        BullModule.registerQueue(
+            { name: TAX_CARD_QUEUE },
+            { name: RECEIPT_QUEUE },
+            { name: SCENARIO_QUEUE },
+        ),
+    ],
+    providers: [TaxCardProcessor],
+})
+export class WorkerModule {}

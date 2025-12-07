@@ -22,11 +22,14 @@ const env_validation_1 = require("./config/env.validation");
 const queue_config_1 = __importDefault(require("./config/queue.config"));
 const redis_config_1 = __importDefault(require("./config/redis.config"));
 const storage_config_1 = __importDefault(require("./config/storage.config"));
+const storage_module_1 = require("./storage/storage.module");
 const auth_module_1 = require("./auth/auth.module");
 const database_module_1 = require("./database/database.module");
 const health_module_1 = require("./health/health.module");
 const queue_module_1 = require("./queue/queue.module");
 const redis_module_1 = require("./redis/redis.module");
+const tax_profiles_module_1 = require("./tax-profiles/tax-profiles.module");
+const tax_cards_module_1 = require("./tax-cards/tax-cards.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -54,6 +57,9 @@ exports.AppModule = AppModule = __decorate([
             queue_module_1.QueueModule,
             health_module_1.HealthModule,
             auth_module_1.AuthModule,
+            storage_module_1.StorageModule,
+            tax_profiles_module_1.TaxProfilesModule,
+            tax_cards_module_1.TaxCardsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
