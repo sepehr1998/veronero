@@ -417,15 +417,17 @@ export class ExpensesService {
         }
 
         if (query.isDeductible !== undefined) {
-            const value =
-                typeof query.isDeductible === 'string'
-                    ? query.isDeductible.toLowerCase()
-                    : query.isDeductible;
-
-            if (value === true || value === 'true') {
-                filters.isDeductible = true;
-            } else if (value === false || value === 'false') {
-                filters.isDeductible = false;
+            if (typeof query.isDeductible === 'string') {
+                const lowered = query.isDeductible.toLowerCase();
+                if (lowered === 'true') {
+                    filters.isDeductible = true;
+                } else if (lowered === 'false') {
+                    filters.isDeductible = false;
+                } else {
+                    throw new BadRequestException('isDeductible must be boolean');
+                }
+            } else if (typeof query.isDeductible === 'boolean') {
+                filters.isDeductible = query.isDeductible;
             } else {
                 throw new BadRequestException('isDeductible must be boolean');
             }

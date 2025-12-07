@@ -51,7 +51,7 @@ export class ReceiptProcessor extends WorkerHost {
                 await tx.receiptExtraction.upsert({
                     where: { receiptFileId: receipt_file_id },
                     update: {
-                        extractedJson: aiResult.sourceJson ?? {},
+                        extractedJson: this.coerceJson(aiResult.sourceJson),
                         suggestedAmount,
                         suggestedDate,
                         suggestedCategoryId: aiResult.suggestedCategoryId ?? null,
@@ -59,7 +59,7 @@ export class ReceiptProcessor extends WorkerHost {
                     },
                     create: {
                         receiptFileId: receipt_file_id,
-                        extractedJson: aiResult.sourceJson ?? {},
+                        extractedJson: this.coerceJson(aiResult.sourceJson),
                         suggestedAmount,
                         suggestedDate,
                         suggestedCategoryId: aiResult.suggestedCategoryId ?? null,
@@ -92,5 +92,15 @@ export class ReceiptProcessor extends WorkerHost {
             chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
         }
         return Buffer.concat(chunks);
+    }
+
+    private coerceJson(value: unknown): Prisma.InputJsonValue {
+        if (value === null || value === undefined) {
+            return {};
+        }
+        if (typeof value === 'object') {
+            return value as Prisma.InputJsonValue;
+        }
+        return {};
     }
 }

@@ -7,6 +7,6 @@ export class ListExpensesDto {
     to?: string;
     categoryId?: string;
     source?: ExpenseSource;
-    isDeductible?: boolean;
+    isDeductible?: boolean | string;
     groupBy?: 'category' | 'month';
 }

@@ -15,6 +15,7 @@ import { StorageModule } from '../storage/storage.module';
 import { AiModule } from '../ai/ai.module';
 import { TaxCardProcessor } from './tax-card.processor';
 import { ReceiptProcessor } from './receipt.processor';
+import { TaxScenarioProcessor } from './tax-scenario.processor';
 import {
     RECEIPT_QUEUE,
     SCENARIO_QUEUE,
@@ -49,6 +50,6 @@ import {
             { name: SCENARIO_QUEUE },
         ),
     ],
-    providers: [TaxCardProcessor, ReceiptProcessor],
+    providers: [TaxCardProcessor, ReceiptProcessor, TaxScenarioProcessor],
 })
 export class WorkerModule {}

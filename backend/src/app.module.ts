@@ -20,6 +20,7 @@ import { TaxProfilesModule } from './tax-profiles/tax-profiles.module';
 import { TaxCardsModule } from './tax-cards/tax-cards.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { ReceiptsModule } from './receipts/receipts.module';
+import { TaxScenariosModule } from './tax-scenarios/tax-scenarios.module';
 
 @Module({
     imports: [
@@ -49,6 +50,7 @@ import { ReceiptsModule } from './receipts/receipts.module';
         TaxCardsModule,
         ExpensesModule,
         ReceiptsModule,
+        TaxScenariosModule,
     ],
     controllers: [AppController],
     providers: [AppService],

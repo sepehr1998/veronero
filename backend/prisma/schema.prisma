@@ -38,6 +38,11 @@ enum ReceiptStatus {
   ERROR      @map("error")
 }
 
+enum TaxScenarioStatus {
+  DRAFT   @map("draft")
+  FINAL   @map("final")
+}
+
 model User {
   id          String          @id @default(uuid()) @db.Uuid
   auth0Id     String          @unique @map("auth0_user_id")
@@ -53,6 +58,7 @@ model User {
   taxCards    TaxCard[]
   expenses    Expense[]
   receiptFiles ReceiptFile[]
+  taxScenarios TaxScenario[]
 
   @@map("users")
 }
@@ -70,6 +76,7 @@ model Account {
   taxCards    TaxCard[]
   expenses    Expense[]
   receiptFiles ReceiptFile[]
+  taxScenarios TaxScenario[]
   country     Country         @relation(fields: [countryCode], references: [code])
 
   @@map("accounts")
@@ -114,6 +121,7 @@ model TaxRegime {
   taxCards    TaxCard[]
   expenseCategories ExpenseCategory[]
   expenses    Expense[]
+  taxScenarios TaxScenario[]
 
   @@map("tax_regimes")
 }
@@ -145,6 +153,7 @@ model UserTaxProfile {
   user            User       @relation(fields: [userId], references: [id])
   account         Account    @relation(fields: [accountId], references: [id])
   taxRegime       TaxRegime  @relation(fields: [taxRegimeId], references: [id])
+  scenarios       TaxScenario[] @relation("ScenarioProfile")
 
   @@map("user_tax_profiles")
 }
@@ -164,6 +173,7 @@ model TaxCard {
   taxRegime      TaxRegime        @relation(fields: [taxRegimeId], references: [id])
   parsed         TaxCardParsed?
   analyses       TaxCardAnalysis[]
+  scenarios      TaxScenario[]    @relation("ScenarioTaxCard")
 
   @@map("tax_cards")
 }
@@ -268,4 +278,70 @@ model ReceiptExtraction {
   suggestedCategory    ExpenseCategory? @relation(fields: [suggestedCategoryId], references: [id])
 
   @@map("receipt_extractions")
+}
+
+model TaxScenario {
+  id                 String       @id @default(uuid()) @db.Uuid
+  userId             String       @map("user_id") @db.Uuid
+  accountId          String       @map("account_id") @db.Uuid
+  taxRegimeId        String       @map("tax_regime_id") @db.Uuid
+  name               String
+  description        String?
+  basedOnTaxCardId   String?      @map("based_on_tax_card_id") @db.Uuid
+  basedOnProfileId   String?      @map("based_on_profile_id") @db.Uuid
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
+
+  user               User         @relation(fields: [userId], references: [id])
+  account            Account      @relation(fields: [accountId], references: [id])
+  taxRegime          TaxRegime    @relation(fields: [taxRegimeId], references: [id])
+  basedOnTaxCard     TaxCard?     @relation("ScenarioTaxCard", fields: [basedOnTaxCardId], references: [id])
+  basedOnProfile     UserTaxProfile? @relation("ScenarioProfile", fields: [basedOnProfileId], references: [id])
+  inputs             TaxScenarioInput[]
+  results            TaxScenarioResult[]
+  recommendations    TaxScenarioRecommendation[]
+
+  @@map("tax_scenarios")
+}
+
+model TaxScenarioInput {
+  id              String     @id @default(uuid()) @db.Uuid
+  scenarioId      String     @map("scenario_id") @db.Uuid
+  incomeJson      Json       @map("income_json")
+  deductionsJson  Json       @map("deductions_json")
+  assumptionsJson Json       @map("assumptions_json")
+  lifeEventsJson  Json       @map("life_events_json")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  scenario        TaxScenario @relation(fields: [scenarioId], references: [id])
+
+  @@map("tax_scenario_inputs")
+}
+
+model TaxScenarioResult {
+  id              String     @id @default(uuid()) @db.Uuid
+  scenarioId      String     @map("scenario_id") @db.Uuid
+  taxableIncome   Decimal    @map("taxable_income")
+  estimatedTax    Decimal    @map("estimated_tax")
+  netIncome       Decimal    @map("net_income")
+  breakdownJson   Json       @map("breakdown_json")
+  comparisonsJson Json?      @map("comparisons_json")
+  createdAt       DateTime   @default(now()) @map("created_at")
+
+  scenario        TaxScenario @relation(fields: [scenarioId], references: [id])
+
+  @@map("tax_scenario_results")
+}
+
+model TaxScenarioRecommendation {
+  id                   String     @id @default(uuid()) @db.Uuid
+  scenarioId           String     @map("scenario_id") @db.Uuid
+  aiSummaryText        String     @map("ai_summary_text")
+  recommendationsJson  Json       @map("recommendations_json")
+  createdAt            DateTime   @default(now()) @map("created_at")
+
+  scenario             TaxScenario @relation(fields: [scenarioId], references: [id])
+
+  @@map("tax_scenario_recommendations")
 }

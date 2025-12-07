@@ -30,6 +30,9 @@ const queue_module_1 = require("./queue/queue.module");
 const redis_module_1 = require("./redis/redis.module");
 const tax_profiles_module_1 = require("./tax-profiles/tax-profiles.module");
 const tax_cards_module_1 = require("./tax-cards/tax-cards.module");
+const expenses_module_1 = require("./expenses/expenses.module");
+const receipts_module_1 = require("./receipts/receipts.module");
+const tax_scenarios_module_1 = require("./tax-scenarios/tax-scenarios.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -60,6 +63,9 @@ exports.AppModule = AppModule = __decorate([
             storage_module_1.StorageModule,
             tax_profiles_module_1.TaxProfilesModule,
             tax_cards_module_1.TaxCardsModule,
+            expenses_module_1.ExpensesModule,
+            receipts_module_1.ReceiptsModule,
+            tax_scenarios_module_1.TaxScenariosModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
