@@ -4,6 +4,10 @@ export interface AiReceiptResult {
     items: Array<{ description: string; amount: number }>;
     total: number;
     currency?: string;
+    date?: string;
+    merchant?: string;
+    suggestedCategoryId?: string | null;
+    confidence?: number;
     sourceJson?: Record<string, unknown>;
 }
 
