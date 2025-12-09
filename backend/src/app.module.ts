@@ -23,6 +23,7 @@ import { ReceiptsModule } from './receipts/receipts.module';
 import { TaxScenariosModule } from './tax-scenarios/tax-scenarios.module';
 import { LifeEventsModule } from './life-events/life-events.module';
 import { CalendarModule } from './calendar/calendar.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
     imports: [
@@ -55,6 +56,7 @@ import { CalendarModule } from './calendar/calendar.module';
         TaxScenariosModule,
         LifeEventsModule,
         CalendarModule,
+        ChatModule,
     ],
     controllers: [AppController],
     providers: [AppService],
