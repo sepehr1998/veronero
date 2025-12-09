@@ -14,6 +14,27 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         info: unknown,
         context: ExecutionContext,
     ): TUser {
+        const request = context
+            .switchToHttp()
+            .getRequest<AuthenticatedRequest>();
+
+        if (user) {
+            request.user = user as unknown as Auth0JwtPayload;
+            return user;
+        }
+
+        // Fallback to session (express-openid-connect) if JWT is missing
+        const oidcUser =
+            (request as any)?.oidc?.user as Auth0JwtPayload | undefined;
+        const isAuthenticated = Boolean(
+            (request as any)?.oidc?.isAuthenticated?.(),
+        );
+
+        if (isAuthenticated && oidcUser?.sub) {
+            request.user = oidcUser;
+            return oidcUser as unknown as TUser;
+        }
+
         if (err) {
             if (err instanceof Error) {
                 throw err;
@@ -21,16 +42,6 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
             throw new UnauthorizedException('Invalid authentication token');
         }
 
-        const authUser = user as unknown as Auth0JwtPayload | undefined;
-        if (!authUser) {
-            throw new UnauthorizedException('Invalid authentication token');
-        }
-
-        const request = context
-            .switchToHttp()
-            .getRequest<AuthenticatedRequest>();
-        request.user = authUser;
-
-        return user;
+        throw new UnauthorizedException('Invalid authentication token');
     }
 }

@@ -11,21 +11,26 @@ const common_1 = require("@nestjs/common");
 const passport_1 = require("@nestjs/passport");
 let JwtAuthGuard = class JwtAuthGuard extends (0, passport_1.AuthGuard)('jwt') {
     handleRequest(err, user, info, context) {
+        const request = context
+            .switchToHttp()
+            .getRequest();
+        if (user) {
+            request.user = user;
+            return user;
+        }
+        const oidcUser = request?.oidc?.user;
+        const isAuthenticated = Boolean(request?.oidc?.isAuthenticated?.());
+        if (isAuthenticated && oidcUser?.sub) {
+            request.user = oidcUser;
+            return oidcUser;
+        }
         if (err) {
             if (err instanceof Error) {
                 throw err;
             }
             throw new common_1.UnauthorizedException('Invalid authentication token');
         }
-        const authUser = user;
-        if (!authUser) {
-            throw new common_1.UnauthorizedException('Invalid authentication token');
-        }
-        const request = context
-            .switchToHttp()
-            .getRequest();
-        request.user = authUser;
-        return user;
+        throw new common_1.UnauthorizedException('Invalid authentication token');
     }
 };
 exports.JwtAuthGuard = JwtAuthGuard;

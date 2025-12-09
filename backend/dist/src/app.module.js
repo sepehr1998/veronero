@@ -35,6 +35,7 @@ const receipts_module_1 = require("./receipts/receipts.module");
 const tax_scenarios_module_1 = require("./tax-scenarios/tax-scenarios.module");
 const life_events_module_1 = require("./life-events/life-events.module");
 const calendar_module_1 = require("./calendar/calendar.module");
+const chat_module_1 = require("./chat/chat.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -70,6 +71,7 @@ exports.AppModule = AppModule = __decorate([
             tax_scenarios_module_1.TaxScenariosModule,
             life_events_module_1.LifeEventsModule,
             calendar_module_1.CalendarModule,
+            chat_module_1.ChatModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

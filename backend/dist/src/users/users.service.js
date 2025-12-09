@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
+const client_1 = require("@prisma/client");
 const prisma_service_1 = require("../database/prisma.service");
 let UsersService = class UsersService {
     prisma;
@@ -69,6 +70,60 @@ let UsersService = class UsersService {
             where: { id: userId },
             data,
         });
+    }
+    async listUserAccounts(userId) {
+        return this.prisma.userAccount.findMany({
+            where: { userId },
+            include: { account: true },
+            orderBy: { createdAt: 'asc' },
+        });
+    }
+    async ensureDefaultAccountForUser(user) {
+        const existing = await this.prisma.userAccount.findFirst({
+            where: { userId: user.id },
+            include: { account: true },
+        });
+        if (existing?.account) {
+            return existing.account;
+        }
+        let country = (await this.prisma.country.findFirst({
+            orderBy: { code: 'asc' },
+        })) ?? null;
+        if (!country) {
+            country = await this.prisma.country.upsert({
+                where: { code: 'FI' },
+                update: {},
+                create: {
+                    code: 'FI',
+                    name: 'Finland',
+                },
+            });
+        }
+        await this.prisma.taxRegime.upsert({
+            where: { slug: `${country.code.toLowerCase()}_individual_default` },
+            update: { isActive: true },
+            create: {
+                slug: `${country.code.toLowerCase()}_individual_default`,
+                displayName: `${country.name} Default Individual Taxation`,
+                countryCode: country.code,
+                isActive: true,
+            },
+        });
+        const account = await this.prisma.account.create({
+            data: {
+                name: user.fullName ?? `${user.email}'s account`,
+                type: client_1.AccountType.INDIVIDUAL,
+                countryCode: country.code,
+            },
+        });
+        await this.prisma.userAccount.create({
+            data: {
+                userId: user.id,
+                accountId: account.id,
+                role: client_1.UserAccountRole.OWNER,
+            },
+        });
+        return account ?? null;
     }
 };
 exports.UsersService = UsersService;

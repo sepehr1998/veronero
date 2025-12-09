@@ -16,10 +16,20 @@ export type Auth0Profile = {
     locale?: string;
 };
 
+export type AccountMembership = {
+    accountId: string;
+    name: string;
+    countryCode: string;
+    type: string;
+    role: string;
+};
+
 export type AuthSessionResponse = {
     isAuthenticated: boolean;
     user: AuthenticatedUserProfile | null;
     auth0Profile: Auth0Profile | null;
+    accounts?: AccountMembership[];
+    defaultAccountId?: string | null;
 };
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;

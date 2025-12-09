@@ -81,9 +81,11 @@ export default function DashboardNavbar() {
                                     <LayoutDashboard className="w-4 h-4 text-gray-500" />
                                     <span>My Dashboard</span>
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="flex items-center space-x-2">
+                                <DropdownMenuItem asChild className="flex items-center space-x-2 cursor-pointer">
+                                    <Link href="/dashboard/tax-profile" className="flex items-center space-x-2 w-full">
                                     <User className="w-4 h-4 text-gray-500" />
                                     <span>Profile</span>
+                                    </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem className="flex items-center space-x-2">
                                     <Settings className="w-4 h-4 text-gray-500" />

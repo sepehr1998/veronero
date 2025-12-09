@@ -1,6 +1,7 @@
 import type { JwtPayload } from 'jsonwebtoken';
 import type { Request } from 'express';
 import type { User } from '@prisma/client';
+import type { AccountType, UserAccountRole } from '@prisma/client';
 export interface Auth0JwtPayload extends JwtPayload {
     sub: string;
     email?: string;
@@ -35,4 +36,13 @@ export interface AuthSession {
     isAuthenticated: boolean;
     user: AuthenticatedUserProfile | null;
     auth0Profile: Auth0Profile | null;
+    accounts?: AuthSessionAccount[];
+    defaultAccountId?: string | null;
+}
+export interface AuthSessionAccount {
+    accountId: string;
+    name: string;
+    countryCode: string;
+    type: AccountType;
+    role: UserAccountRole;
 }

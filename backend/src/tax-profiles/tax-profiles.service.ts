@@ -57,16 +57,19 @@ export class TaxProfilesService {
             orderBy: { createdAt: 'desc' },
         });
 
-        const nextTaxRegimeId =
-            validatedInput.taxRegimeId ?? existingProfile?.taxRegimeId;
-        if (!nextTaxRegimeId) {
+        const resolvedTaxRegimeId =
+            this.normalizeOptionalString(validatedInput.taxRegimeId) ??
+            this.normalizeOptionalString(existingProfile?.taxRegimeId) ??
+            (await this.defaultTaxRegimeId(account.countryCode));
+
+        if (!resolvedTaxRegimeId) {
             throw new BadRequestException(
-                'taxRegimeId is required when creating a profile',
+                'taxRegimeId is required for this account',
             );
         }
 
         const taxRegime = await this.validateTaxRegime(
-            nextTaxRegimeId,
+            resolvedTaxRegimeId,
             account.countryCode,
         );
 
@@ -80,25 +83,37 @@ export class TaxProfilesService {
                 : this.ensureJsonObject(existingProfile?.profileDataJson);
 
         let upsertedProfile: UserTaxProfile;
-        if (existingProfile) {
-            upsertedProfile = await this.prisma.userTaxProfile.update({
-                where: { id: existingProfile.id },
-                data: {
-                    taxRegimeId: taxRegime.id,
-                    occupation,
-                    profileDataJson: profileData,
-                },
-            });
-        } else {
-            upsertedProfile = await this.prisma.userTaxProfile.create({
-                data: {
-                    userId,
-                    accountId,
-                    taxRegimeId: taxRegime.id,
-                    occupation,
-                    profileDataJson: profileData,
-                },
-            });
+        try {
+            if (existingProfile) {
+                upsertedProfile = await this.prisma.userTaxProfile.update({
+                    where: { id: existingProfile.id },
+                    data: {
+                        taxRegimeId: taxRegime.id,
+                        occupation,
+                        profileDataJson: profileData,
+                    },
+                });
+            } else {
+                upsertedProfile = await this.prisma.userTaxProfile.create({
+                    data: {
+                        userId,
+                        accountId,
+                        taxRegimeId: taxRegime.id,
+                        occupation,
+                        profileDataJson: profileData,
+                    },
+                });
+            }
+        } catch (error) {
+            if (
+                error instanceof Prisma.PrismaClientKnownRequestError &&
+                error.code === 'P2003'
+            ) {
+                throw new BadRequestException(
+                    'Invalid taxRegimeId for this account',
+                );
+            }
+            throw error;
         }
 
         return this.mapProfile({ ...upsertedProfile, taxRegime });
@@ -121,16 +136,22 @@ export class TaxProfilesService {
     }
 
     private async validateTaxRegime(
-        taxRegimeId: string,
+        taxRegimeIdOrSlug: string,
         countryCode?: string,
     ): Promise<TaxRegime> {
-        const taxRegime = await this.prisma.taxRegime.findFirst({
-            where: {
-                id: taxRegimeId,
-                isActive: true,
-                ...(countryCode ? { countryCode } : null),
-            },
-        });
+        let taxRegime = await this.resolveTaxRegime(
+            taxRegimeIdOrSlug,
+            countryCode,
+        );
+
+        if (!taxRegime && countryCode) {
+            // Try to ensure a default regime exists for this country, then re-resolve
+            await this.ensureDefaultTaxRegime(countryCode);
+            taxRegime = await this.resolveTaxRegime(
+                taxRegimeIdOrSlug,
+                countryCode,
+            );
+        }
 
         if (!taxRegime) {
             throw new NotFoundException('Tax regime is not valid for account');
@@ -184,6 +205,14 @@ export class TaxProfilesService {
         );
     }
 
+    private normalizeOptionalString(value?: string | null): string | undefined {
+        if (typeof value !== 'string') {
+            return undefined;
+        }
+        const trimmed = value.trim();
+        return trimmed.length > 0 ? trimmed : undefined;
+    }
+
     private mapProfile(
         profile: UserTaxProfile & { taxRegime?: TaxRegime | null },
     ): TaxProfileResponse {
@@ -198,5 +227,71 @@ export class TaxProfilesService {
             updatedAt: profile.updatedAt,
             taxRegime: profile.taxRegime ?? undefined,
         };
+    }
+
+    private async defaultTaxRegimeId(
+        countryCode?: string,
+    ): Promise<string | null> {
+        if (!countryCode) {
+            return null;
+        }
+        let regime = await this.prisma.taxRegime.findFirst({
+            where: { countryCode, isActive: true },
+            orderBy: { createdAt: 'asc' },
+        });
+        if (!regime) {
+            regime = await this.ensureDefaultTaxRegime(countryCode);
+        }
+        return regime?.id ?? null;
+    }
+
+    private async resolveTaxRegime(
+        taxRegimeIdOrSlug: string,
+        countryCode?: string,
+    ): Promise<TaxRegime | null> {
+        const whereBase = countryCode ? { countryCode } : {};
+        if (this.isUuid(taxRegimeIdOrSlug)) {
+            return this.prisma.taxRegime.findFirst({
+                where: { id: taxRegimeIdOrSlug, isActive: true, ...whereBase },
+            });
+        }
+        return this.prisma.taxRegime.findFirst({
+            where: { slug: taxRegimeIdOrSlug, isActive: true, ...whereBase },
+        });
+    }
+
+    private async ensureDefaultTaxRegime(
+        countryCode: string,
+    ): Promise<TaxRegime | null> {
+        const slug = `${countryCode.toLowerCase()}_individual_default`;
+        await this.prisma.country.upsert({
+            where: { code: countryCode },
+            update: {},
+            create: {
+                code: countryCode,
+                name: countryCode,
+            },
+        });
+
+        await this.prisma.taxRegime.upsert({
+            where: { slug },
+            update: { isActive: true, countryCode },
+            create: {
+                slug,
+                displayName: `${countryCode} Default Individual Taxation`,
+                countryCode,
+                isActive: true,
+            },
+        });
+
+        return this.prisma.taxRegime.findFirst({
+            where: { slug, countryCode, isActive: true },
+        });
+    }
+
+    private isUuid(value: string): boolean {
+        return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
+            value,
+        );
     }
 }

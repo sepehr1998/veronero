@@ -8,6 +8,7 @@ import type {
     AuthSession,
     AuthenticatedUserProfile,
     Auth0Profile,
+    AuthSessionAccount,
 } from './auth.types';
 
 interface LoginOptions {
@@ -87,11 +88,36 @@ export class AuthService {
         }
 
         const user = await this.usersService.syncFromAuth0Payload(payload);
+        let memberships = await this.usersService.listUserAccounts(user.id);
+
+        // Ensure at least one account exists for the user (best-effort)
+        if (memberships.length === 0) {
+            const created = await this.usersService.ensureDefaultAccountForUser(
+                user,
+            );
+            if (created) {
+                memberships = await this.usersService.listUserAccounts(user.id);
+            }
+        }
+
+        const accounts: AuthSessionAccount[] = memberships.map(
+            (membership) => ({
+                accountId: membership.account.id,
+                name: membership.account.name,
+                countryCode: membership.account.countryCode,
+                type: membership.account.type,
+                role: membership.role,
+            }),
+        );
+
+        const defaultAccountId = accounts[0]?.accountId ?? null;
 
         return {
             isAuthenticated: true,
             user: this.mapUser(user),
             auth0Profile: this.mapAuth0Profile(payload),
+            accounts,
+            defaultAccountId,
         };
     }
 

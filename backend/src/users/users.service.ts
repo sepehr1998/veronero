@@ -1,5 +1,11 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { Prisma, User } from '@prisma/client';
+import {
+    Account,
+    AccountType,
+    Prisma,
+    User,
+    UserAccountRole,
+} from '@prisma/client';
 import { Auth0JwtPayload } from '../auth/auth.types';
 import { PrismaService } from '../database/prisma.service';
 
@@ -72,5 +78,71 @@ export class UsersService {
             where: { id: userId },
             data,
         });
+    }
+
+    async listUserAccounts(userId: string) {
+        return this.prisma.userAccount.findMany({
+            where: { userId },
+            include: { account: true },
+            orderBy: { createdAt: 'asc' },
+        });
+    }
+
+    async ensureDefaultAccountForUser(user: User): Promise<Account | null> {
+        const existing = await this.prisma.userAccount.findFirst({
+            where: { userId: user.id },
+            include: { account: true },
+        });
+
+        if (existing?.account) {
+            return existing.account;
+        }
+
+        let country =
+            (await this.prisma.country.findFirst({
+                orderBy: { code: 'asc' },
+            })) ?? null;
+
+        // Ensure at least one country exists so we can create a default account
+        if (!country) {
+            country = await this.prisma.country.upsert({
+                where: { code: 'FI' },
+                update: {},
+                create: {
+                    code: 'FI',
+                    name: 'Finland',
+                },
+            });
+        }
+
+        // Ensure at least one active tax regime exists for the country
+        await this.prisma.taxRegime.upsert({
+            where: { slug: `${country.code.toLowerCase()}_individual_default` },
+            update: { isActive: true },
+            create: {
+                slug: `${country.code.toLowerCase()}_individual_default`,
+                displayName: `${country.name} Default Individual Taxation`,
+                countryCode: country.code,
+                isActive: true,
+            },
+        });
+
+        const account = await this.prisma.account.create({
+            data: {
+                name: user.fullName ?? `${user.email}'s account`,
+                type: AccountType.INDIVIDUAL,
+                countryCode: country.code,
+            },
+        });
+
+        await this.prisma.userAccount.create({
+            data: {
+                userId: user.id,
+                accountId: account.id,
+                role: UserAccountRole.OWNER,
+            },
+        });
+
+        return account ?? null;
     }
 }

@@ -133,8 +133,11 @@ export class ChatService {
                         m.sender === ChatMessageSender.USER ||
                         m.sender === ChatMessageSender.ASSISTANT,
                 )
-                .map((m) => ({
-                    role: m.sender === ChatMessageSender.USER ? 'user' : 'assistant',
+                .map((m): AiChatMessage => ({
+                    role:
+                        m.sender === ChatMessageSender.USER
+                            ? 'user'
+                            : 'assistant',
                     content: m.messageText,
                 })),
             { role: 'user', content: payload.messageText },

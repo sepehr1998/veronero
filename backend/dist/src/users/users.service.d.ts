@@ -1,4 +1,4 @@
-import { Prisma, User } from '@prisma/client';
+import { Account, Prisma, User } from '@prisma/client';
 import { Auth0JwtPayload } from '../auth/auth.types';
 import { PrismaService } from '../database/prisma.service';
 export declare class UsersService {
@@ -10,4 +10,22 @@ export declare class UsersService {
     private extractStringClaim;
     private fallbackEmail;
     updateUser(userId: string, data: Prisma.UserUpdateInput): Promise<User>;
+    listUserAccounts(userId: string): Promise<({
+        account: {
+            name: string;
+            id: string;
+            countryCode: string;
+            createdAt: Date;
+            updatedAt: Date;
+            type: import("@prisma/client").$Enums.AccountType;
+        };
+    } & {
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        role: import("@prisma/client").$Enums.UserAccountRole;
+        accountId: string;
+        userId: string;
+    })[]>;
+    ensureDefaultAccountForUser(user: User): Promise<Account | null>;
 }
