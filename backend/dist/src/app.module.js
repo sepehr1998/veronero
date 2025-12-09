@@ -33,6 +33,8 @@ const tax_cards_module_1 = require("./tax-cards/tax-cards.module");
 const expenses_module_1 = require("./expenses/expenses.module");
 const receipts_module_1 = require("./receipts/receipts.module");
 const tax_scenarios_module_1 = require("./tax-scenarios/tax-scenarios.module");
+const life_events_module_1 = require("./life-events/life-events.module");
+const calendar_module_1 = require("./calendar/calendar.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -66,6 +68,8 @@ exports.AppModule = AppModule = __decorate([
             expenses_module_1.ExpensesModule,
             receipts_module_1.ReceiptsModule,
             tax_scenarios_module_1.TaxScenariosModule,
+            life_events_module_1.LifeEventsModule,
+            calendar_module_1.CalendarModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

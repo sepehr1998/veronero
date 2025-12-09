@@ -16,11 +16,10 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { AuthUser } from '../auth/auth-user.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ActiveAccountId } from '../tax-profiles/active-account.decorator';
 import type { TaxCardResponse } from './tax-cards.service';
 import { TaxCardsService } from './tax-cards.service';
 
-@Controller('tax-cards')
+@Controller('accounts/:accountId/tax-cards')
 @UseGuards(JwtAuthGuard)
 export class TaxCardsController {
     constructor(private readonly taxCardsService: TaxCardsService) {}
@@ -33,14 +32,10 @@ export class TaxCardsController {
     )
     async uploadTaxCard(
         @AuthUser() user: User,
-        @ActiveAccountId() accountId: string | undefined,
+        @Param('accountId') accountId: string,
         @UploadedFile() file: Express.Multer.File,
         @Body('taxRegimeId') taxRegimeId?: string,
     ): Promise<TaxCardResponse> {
-        if (!accountId) {
-            throw new BadRequestException('Active account is required');
-        }
-
         if (!file) {
             throw new BadRequestException('File is required');
         }
@@ -67,18 +62,15 @@ export class TaxCardsController {
     @Get()
     async listTaxCards(
         @AuthUser() user: User,
-        @ActiveAccountId() accountId: string | undefined,
+        @Param('accountId') accountId: string,
     ): Promise<TaxCardResponse[]> {
-        if (!accountId) {
-            throw new BadRequestException('Active account is required');
-        }
-
         return this.taxCardsService.listTaxCardsForAccount(user.id, accountId);
     }
 
     @Get(':id/file')
     async getTaxCardFile(
         @AuthUser() user: User,
+        @Param('accountId') accountId: string,
         @Param('id') taxCardId: string,
     ): Promise<StreamableFile> {
         const { stream, fileName } =

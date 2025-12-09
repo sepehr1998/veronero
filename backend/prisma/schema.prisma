@@ -43,6 +43,17 @@ enum TaxScenarioStatus {
   FINAL   @map("final")
 }
 
+enum LifeEventStatus {
+  ACTIVE   @map("active")
+  INACTIVE @map("inactive")
+}
+
+enum CalendarEventStatus {
+  UPCOMING  @map("upcoming")
+  COMPLETED @map("completed")
+  DISMISSED @map("dismissed")
+}
+
 model User {
   id          String          @id @default(uuid()) @db.Uuid
   auth0Id     String          @unique @map("auth0_user_id")
@@ -59,6 +70,8 @@ model User {
   expenses    Expense[]
   receiptFiles ReceiptFile[]
   taxScenarios TaxScenario[]
+  lifeEvents  UserLifeEvent[]
+  calendarEvents CalendarEvent[]
 
   @@map("users")
 }
@@ -77,6 +90,8 @@ model Account {
   expenses    Expense[]
   receiptFiles ReceiptFile[]
   taxScenarios TaxScenario[]
+  lifeEvents  UserLifeEvent[]
+  calendarEvents CalendarEvent[]
   country     Country         @relation(fields: [countryCode], references: [code])
 
   @@map("accounts")
@@ -122,6 +137,8 @@ model TaxRegime {
   expenseCategories ExpenseCategory[]
   expenses    Expense[]
   taxScenarios TaxScenario[]
+  lifeEventTypes LifeEventType[]
+  calendarEventTemplates CalendarEventTemplate[]
 
   @@map("tax_regimes")
 }
@@ -344,4 +361,73 @@ model TaxScenarioRecommendation {
   scenario             TaxScenario @relation(fields: [scenarioId], references: [id])
 
   @@map("tax_scenario_recommendations")
+}
+
+model LifeEventType {
+  id                 String     @id @default(uuid()) @db.Uuid
+  taxRegimeId        String     @map("tax_regime_id") @db.Uuid
+  code               String
+  displayName        String     @map("display_name")
+  description        String?
+  questionsSchemaJson Json      @map("questions_schema_json")
+  isActive           Boolean    @default(true) @map("is_active")
+
+  taxRegime          TaxRegime  @relation(fields: [taxRegimeId], references: [id])
+  userLifeEvents     UserLifeEvent[]
+
+  @@map("life_event_types")
+  @@unique([taxRegimeId, code])
+}
+
+model UserLifeEvent {
+  id               String        @id @default(uuid()) @db.Uuid
+  userId           String        @map("user_id") @db.Uuid
+  accountId        String        @map("account_id") @db.Uuid
+  lifeEventTypeId  String        @map("life_event_type_id") @db.Uuid
+  answersJson      Json          @map("answers_json")
+  occurredAt       DateTime      @map("occurred_at")
+  createdAt        DateTime      @default(now()) @map("created_at")
+
+  user             User          @relation(fields: [userId], references: [id])
+  account          Account       @relation(fields: [accountId], references: [id])
+  lifeEventType    LifeEventType @relation(fields: [lifeEventTypeId], references: [id])
+
+  @@map("user_life_events")
+  @@index([accountId, occurredAt])
+}
+
+model CalendarEventTemplate {
+  id           String       @id @default(uuid()) @db.Uuid
+  taxRegimeId  String       @map("tax_regime_id") @db.Uuid
+  code         String
+  description  String?
+  ruleJson     Json         @map("rule_json")
+  isActive     Boolean      @default(true) @map("is_active")
+
+  taxRegime    TaxRegime    @relation(fields: [taxRegimeId], references: [id])
+  events       CalendarEvent[]
+
+  @@map("calendar_event_templates")
+  @@unique([taxRegimeId, code])
+}
+
+model CalendarEvent {
+  id          String                @id @default(uuid()) @db.Uuid
+  userId      String                @map("user_id") @db.Uuid
+  accountId   String                @map("account_id") @db.Uuid
+  templateId  String?               @map("template_id") @db.Uuid
+  title       String
+  description String?
+  startAt     DateTime              @map("start_at")
+  endAt       DateTime              @map("end_at")
+  status      CalendarEventStatus
+  createdAt   DateTime              @default(now()) @map("created_at")
+  updatedAt   DateTime              @updatedAt @map("updated_at")
+
+  user        User                  @relation(fields: [userId], references: [id])
+  account     Account               @relation(fields: [accountId], references: [id])
+  template    CalendarEventTemplate? @relation(fields: [templateId], references: [id])
+
+  @@map("calendar_events")
+  @@index([accountId, startAt])
 }

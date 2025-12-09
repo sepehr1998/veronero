@@ -17,10 +17,14 @@ import { TaxCardProcessor } from './tax-card.processor';
 import { ReceiptProcessor } from './receipt.processor';
 import { TaxScenarioProcessor } from './tax-scenario.processor';
 import {
+    CALENDAR_QUEUE,
     RECEIPT_QUEUE,
     SCENARIO_QUEUE,
     TAX_CARD_QUEUE,
 } from '../queue/queue.constants';
+import { CalendarCoreModule } from '../calendar/calendar-core.module';
+import { CalendarProcessor } from './calendar.processor';
+import { TaxScenariosModule } from '../tax-scenarios/tax-scenarios.module';
 
 @Module({
     imports: [
@@ -44,12 +48,20 @@ import {
         DatabaseModule,
         StorageModule,
         AiModule,
+        CalendarCoreModule,
+        TaxScenariosModule,
         BullModule.registerQueue(
             { name: TAX_CARD_QUEUE },
             { name: RECEIPT_QUEUE },
             { name: SCENARIO_QUEUE },
+            { name: CALENDAR_QUEUE },
         ),
     ],
-    providers: [TaxCardProcessor, ReceiptProcessor, TaxScenarioProcessor],
+    providers: [
+        TaxCardProcessor,
+        ReceiptProcessor,
+        TaxScenarioProcessor,
+        CalendarProcessor,
+    ],
 })
 export class WorkerModule {}

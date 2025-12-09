@@ -186,13 +186,16 @@ export class TaxScenariosService {
             throw new NotFoundException('Scenario not found');
         }
 
-        if (dto.inputs) {
-            await this.repo.upsertInputs(scenario.id, {
-                id: randomUUID(),
-                scenario: { connect: { id: scenario.id } },
-                ...this.mapInput(dto.inputs),
-            });
-        }
+        const resolvedInputs = await this.resolveInputs(
+            accountId,
+            dto.inputs ?? scenario.inputs[0],
+        );
+
+        await this.repo.upsertInputs(scenario.id, {
+            id: randomUUID(),
+            scenario: { connect: { id: scenario.id } },
+            ...this.mapInput(resolvedInputs),
+        });
 
         await this.taxScenarioQueue.enqueueCalculateScenario(scenario.id);
         return { queued: true };
@@ -333,5 +336,71 @@ export class TaxScenariosService {
             return value as Prisma.InputJsonValue;
         }
         return {};
+    }
+
+    private async resolveInputs(
+        accountId: string,
+        input?: TaxScenarioInput | TaxScenarioInputDto,
+    ): Promise<TaxScenarioInputDto> {
+        const base: TaxScenarioInputDto = {
+            incomeJson:
+                this.ensureRecord(
+                    (input as TaxScenarioInput)?.incomeJson ??
+                        (input as TaxScenarioInputDto)?.incomeJson,
+                ) ?? {},
+            deductionsJson:
+                this.ensureRecord(
+                    (input as TaxScenarioInput)?.deductionsJson ??
+                        (input as TaxScenarioInputDto)?.deductionsJson,
+                ) ?? {},
+            assumptionsJson: this.ensureRecord(
+                (input as TaxScenarioInput)?.assumptionsJson ??
+                    (input as TaxScenarioInputDto)?.assumptionsJson,
+            ),
+            lifeEventsJson: this.ensureRecord(
+                (input as TaxScenarioInput)?.lifeEventsJson ??
+                    (input as TaxScenarioInputDto)?.lifeEventsJson,
+            ),
+        };
+
+        if (!base.lifeEventsJson) {
+            base.lifeEventsJson = await this.buildLifeEventsJson(accountId);
+        }
+
+        return base;
+    }
+
+    private async buildLifeEventsJson(
+        accountId: string,
+    ): Promise<Record<string, unknown>> {
+        const events = await this.prisma.userLifeEvent.findMany({
+            where: { accountId },
+            orderBy: { occurredAt: 'desc' },
+            include: { lifeEventType: true },
+        });
+
+        return {
+            events: events.map((event) => ({
+                id: event.id,
+                lifeEventTypeId: event.lifeEventTypeId,
+                occurredAt: event.occurredAt,
+                answers: event.answersJson ?? {},
+                type: event.lifeEventType
+                    ? {
+                          code: event.lifeEventType.code,
+                          displayName: event.lifeEventType.displayName,
+                      }
+                    : undefined,
+            })),
+        };
+    }
+
+    private ensureRecord(
+        value: unknown,
+    ): Record<string, unknown> | undefined {
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+            return value as Record<string, unknown>;
+        }
+        return undefined;
     }
 }

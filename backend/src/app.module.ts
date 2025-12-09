@@ -21,6 +21,8 @@ import { TaxCardsModule } from './tax-cards/tax-cards.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { ReceiptsModule } from './receipts/receipts.module';
 import { TaxScenariosModule } from './tax-scenarios/tax-scenarios.module';
+import { LifeEventsModule } from './life-events/life-events.module';
+import { CalendarModule } from './calendar/calendar.module';
 
 @Module({
     imports: [
@@ -51,6 +53,8 @@ import { TaxScenariosModule } from './tax-scenarios/tax-scenarios.module';
         ExpensesModule,
         ReceiptsModule,
         TaxScenariosModule,
+        LifeEventsModule,
+        CalendarModule,
     ],
     controllers: [AppController],
     providers: [AppService],
